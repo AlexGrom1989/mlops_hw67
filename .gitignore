@@ -7,7 +7,9 @@ data/tokenized/
 # в нём стадии и `dvc pull` молча отвечает «everything is up to date».
 /data/eval/*.jsonl
 models/
-metrics/
+# Со слешем в начале — только корневой каталог: без якоря шаблон ловит
+# любой вложенный metrics/, в том числе копию отчётов в submission/.
+/metrics/
 mlruns/
 mlartifacts/
 *.log
