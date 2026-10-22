@@ -1,3 +1,9 @@
+# В системе заданы HTTP_PROXY/HTTPS_PROXY на локальный прокси, и requests
+# тянет через него даже обращения к 127.0.0.1 — под нагрузкой это давало 503
+# на половине запросов к MLflow. Локальные адреса обязаны идти напрямую.
+export NO_PROXY := 127.0.0.1,localhost,::1
+export no_proxy := 127.0.0.1,localhost,::1
+
 .PHONY: install up down sweep promote predict check check-storage
 install:
 	uv sync --frozen
