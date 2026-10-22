@@ -1,0 +1,4 @@
+[core]
+    remote = classroom
+['remote "classroom"']
+    url = /home/alex/dvcstore-hw67
