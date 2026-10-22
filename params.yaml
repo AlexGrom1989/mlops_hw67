@@ -1,0 +1,49 @@
+# Один бюджет и один val для всех шести кандидатов. Это короткий учебный поиск.
+model:
+  name: Qwen/Qwen3-0.6B
+  revision: main   # run сохраняет разрешённый commit HF, а не только main
+  # Машина без ускорителя: 16 ядер AMD, AVX2 без AVX-512 и без аппаратного
+  # bfloat16 — он эмулировался бы и шёл медленнее float32. Смена железа это
+  # правка двух строк конфига, а не кода.
+  device: cpu
+  dtype: float32
+  enable_thinking: false
+data:
+  train: data/tokenized/train.pt
+  val: data/tokenized/val.pt
+train:
+  seed: 42
+  max_steps: 4
+  train_limit: 32
+  val_limit: 8
+  batch_size: 1
+  grad_accum: 2
+  eval_every: 2
+  gradient_checkpointing: true
+lora:
+  dropout: 0.05
+  alpha_over_r: 2
+sweep:
+  - {name: qv-r4-low, r: 4, lr: 0.0001, target_modules: [q_proj, v_proj]}
+  - {name: qv-r4-high, r: 4, lr: 0.0003, target_modules: [q_proj, v_proj]}
+  - {name: qv-r8-low, r: 8, lr: 0.0001, target_modules: [q_proj, v_proj]}
+  - {name: qv-r8-high, r: 8, lr: 0.0003, target_modules: [q_proj, v_proj]}
+  - {name: all-r8-low, r: 8, lr: 0.0001, target_modules: [q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj]}
+  - {name: all-r8-high, r: 8, lr: 0.0003, target_modules: [q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj]}
+tracking:
+  uri: http://127.0.0.1:5006
+  experiment: hw6-lora
+registry:
+  name: my-qwen-adapter
+  alias: champion
+  # Порог относительный к базе на ТОМ ЖЕ val; меньше loss — лучше.
+  max_val_ratio: 1.0
+# Промпты примеров генерации: тема та же, что у датасета ДЗ 4 (отзывы об
+# организациях). Они логируются в samples.json и воспроизводятся проверкой
+# загрузки из реестра, поэтому фиксированы и коротки.
+generation:
+  max_new_tokens: 16
+  system: "Определи по тексту отзыва, какую оценку от 1 до 5 поставил автор. Ответь одной цифрой."
+  prompts:
+    - "Отзыв: «Ждали заказ сорок минут, принесли холодным, извинений не было.»"
+    - "Отзыв: «Отличное место, вернёмся ещё раз: быстро, вкусно и недорого.»"
